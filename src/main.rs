@@ -5,6 +5,7 @@ use xml::reader::{EventReader, XmlEvent};
 use std::fs::{File,self};
 use std::path::{Path,PathBuf};
 use std::collections::HashMap;
+use serde_json::Result;
 
 #[derive(Debug)]
 struct  Lexer<'a>{
@@ -98,7 +99,22 @@ fn read_xml_files<P:AsRef<Path>>(file_path:P)->io::Result<String>{
 }
 type TermFreq = HashMap<String,usize>;
 type TermFreqIndex = HashMap<PathBuf,TermFreq>;
-fn main()-> io::Result<()> {
+
+fn main()->io::Result<()>{
+    let index_path = "index.json";
+    let index_file = File::open(index_path)?;
+
+    println!("Reading {index_file:?} index file");
+
+    let tf_index:TermFreqIndex = serde_json::from_reader(index_file).expect("Serde does not fail");
+
+    println!("{index_path} contains {count} files", count = tf_index.len());
+
+
+    Ok(())
+}
+
+fn main1()-> io::Result<()> {
     // let file_path = "c:/xampp/htdocs/slurstudio/resources/views/welcome.blade.php";
     // let file_path = "docs.gl/gl4/glClear.xhtml";
     // Split the file by one . from the right path 
@@ -155,16 +171,20 @@ fn main()-> io::Result<()> {
         // println!("{file_path:?}=> {size}",size= content.len());
     }
 
-    for (path,tf) in tf_index{
-        println!("{path:?} has {count} unique tokens", count = tf.len());
-    }
+    //Create a JSON file
+
+    let index_path  = "index.json";
+    let index_file = File::create(&index_path)?;
+    serde_json::to_writer(index_file,&tf_index).expect("Serde works fine");
+
+    // for (path,tf) in tf_index{
+    //     println!("{path:?} has {count} unique tokens", count = tf.len());
+    // }
     //Read file directly
     //Read and put every charater in a vector
     // let content = read_xml_files("docs.gl/gl4/glVertexAttribBinding.xhtml")?.chars().collect::<Vec<_>>();
     // let lexer = Lexer::new(&content);
     // println!("{lexer:?}");
-
-   
 
     Ok(())
 
